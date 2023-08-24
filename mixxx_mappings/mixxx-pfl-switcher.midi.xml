@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MixxxControllerPreset mixxxVersion="2.0" schemaVersion="1">
+    <info>
+        <name>Mixxx PFL Headphone Switcher</name>
+        <author>Simon Hyde</author>
+        <description>Trigger external relays/audio switch ICs to switch headphone feed via MIDI to Pi Pico, for example.</description>
+    </info>
+    <controller id="mixxx-pfl-switcher">
+        <scriptfiles>
+            <file filename="mixxx-pfl-switcher.js" functionprefix="PflSwitcher" />
+        </scriptfiles>
+    </controller>
+</MixxxControllerPreset>
