@@ -48,6 +48,32 @@ PflSwitcher.pflOnPlayGroups = [
 
 PflSwitcher.buttonCache = {};
 
+PflSwitcher.setRelays = function(mask, state)
+{
+    if(mask == 3)
+    {
+        //For full stereo relay switches, use legacy mask-less message, which only handles first 2 relays
+        midi.sendShortMsg(0x90, 1, state)
+    }
+    else
+    {
+        //Otherwise use newer message which sends a mask for which relays to modify,
+        //and a mask indicating the state of each of those
+        midi.sendShortMsg(0x91, mask, state)
+    }
+}
+//Just set the state of 1 relay/switch, leaving everything else unchanged.
+PflSwitcher.setIndividualRelay = function(relay, state)
+{
+    midi.sendShortMsg(0x92, relay, state? 1 : 0)
+}
+//Just set state of first 2 relays/switches, leaving any others unchanged
+PflSwitcher.setStereoRelays = function(state)
+{
+    this.setRelays(0x03, state)
+}
+
+
 PflSwitcher.recalcState = function()
 {
     print("pfl-switcher: recalculating state")
@@ -61,12 +87,12 @@ PflSwitcher.recalcState = function()
             if(this.split)
             {
                 //If we're split, left leg only
-                midi.sendShortMsg(0x90, 1, 0x01);
+                this.setStereoRelays(0x01);
             }
             else
             {
                 //Otherwise both legs (0x02 & 0x01)
-                midi.sendShortMsg(0x90, 1, 0x03);
+                this.setStereoRelays(0x03);
             }
             bContinue = false
             //Only need to hang around and do all the remaining loop iterations if we want to print them out for debug
@@ -79,7 +105,7 @@ PflSwitcher.recalcState = function()
     if(bContinue)
     {
         //No PFL button found active, switch both relays off
-        midi.sendShortMsg(0x90, 1, 0x00);
+        this.setStereoRelays(0x00);
     }
 }
 
@@ -107,7 +133,7 @@ PflSwitcher.initTimer = function()
         engine.stopTimer(this.initTimerId);
         return;
     }
-    midi.sendShortMsg(0x90, 1, this.initTimerState);
+    this.setStereoRelays(this.initTimerState);
 }
 
 PflSwitcher.init = function (id, debugging) {
@@ -138,5 +164,5 @@ PflSwitcher.init = function (id, debugging) {
 
 PflSwitcher.shutdown = function() {
    // turn off switch on shutdown
-   midi.sendShortMsg(0x90, 1, 0x00);
+   this.setStereoRelays(0x00);
 }

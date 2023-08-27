@@ -9,7 +9,7 @@ Currently this can control up to 3 switches (only 2 are used for stereo audio sw
 3. Once this has been done (or if you already had CircuitPython), copy the contents of this folder onto the new "CIRCUITPY" USB Mass Storage device that appears (and rename the filesystem if you want).
 4. The Pi Pico should flash its LED for 1 second, and then load the code, which will cause all switches to go on for 0.15 seconds, then just left and right for 0.15 seconds, then just the left relay for 0.15 seconds, then off. This is a quick indication that it's booted sucesfully. A red LED lights up next to each relay as it is triggered.
 5. Locate the 2 files in the `mixxx_mappings` folder, and copy them to your [Mixxx Controller Mapping Folder](https://github.com/mixxxdj/mixxx/wiki/Controller-Mapping-File-Locations)
-6. Fire up Mixxx, and go to Preferences, Controllers, and select the device (either called "Mixxx PFL Switcher" or "CircuitPython Audio"), Enable it, and Load Preset of "Mixxx PFL Switcher" from the mapping files you just copied over.
+6. Fire up Mixxx, and go to Preferences, Controllers, and select the device (either called "CircuitPython Audio" or whatever you renamed the device to in Step 2), Enable it, and Load Preset of "Mixxx PFL Switcher" from the mapping files you just copied over.
 7. Immediately that this preset loads, you should see/hear another quick initialisation sequence, with 0.2 seconds for each of:
    1. Left Switched
    2. Right Switched
@@ -32,14 +32,30 @@ Currently this can control up to 3 switches (only 2 are used for stereo audio sw
 - Script also monitors the status of the headSplit parameter to know which relays to activate
 - Set of monitored groups is listed in arrays at the top of `mixxx-pfl-switcher.js` and can be adjusted to add more or exclude some channels
 ### MIDI Comms
-The device accepts simple 3-byte MIDI commands, of the form:
-- 0x90 - MIDI Note On, Channel 0
-- 0x01 - Note 1
-- 0x0x - Bitmask indicating which relays should be on 1 for left, 2 for right, ie:
-  - 0x00 - Both Relays Off
-  - 0x01 - Left Relay only On
-  - 0x02 - Right Relay only On
-  - 0x03 - Both Relays On
+The device accepts 3 possible simple 3-byte MIDI command formats:
+1. A simple command setting the state of the first 2 switches (ie stereo audio switch):
+   - 0x90 - MIDI Note On, Channel 1
+   - 0x01 - Note 1
+   - 0x0x - Bitmask indicating which relays should be on 1 for left, 2 for right, ie:
+     - 0x00 - Both Relays Off
+     - 0x01 - Left Relay only On
+     - 0x02 - Right Relay only On
+     - 0x03 - Both Relays On
+
+2. A more complex command allowing any set of relays to be changed:
+   - 0x91 - MIDI Note On, Channel 2
+   - 0x0x - Note - Bitmask indicating which relays this command will affect
+   - 0x0x - Velocity - Bitmask indicating the state of the affected relays
+   
+   So, for example, 0x91, 0x06, 0x02 would affect relays 2 & 3, turning relay 2 on, and relay 3 off.
+
+5. A simple command to change the state of a single relay:
+   - 0x92 - MIDI Note On, Channel 3
+   - 0x0x - Note - The index of the relay you want to change (ie 1,2 or 3)
+   - 0x0x - Velocity - 0 indicates turn the relay off, any other value indicates turn it on
+
+   So, for example, 0x92, 0x03, 0x01 would turn on relay 3
+  
 ### Pi Pico
 - CircuitPython code which loops around polling for MIDI input, and enables GPOs 20 (left), 21 (right) and 19 (spare) to cause the relays to close/audio switches to activate, as instructed by the host.
 
